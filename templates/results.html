@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+      <h4> Your search matched {{formatted_address}} (blue marker)</h4>
+      <h4> There are {{n_cluster}} unregistered houses in the nearest cluster of houses (green markers)</h4>
+      {% with map=googlemap_obj("my-map", lat=user_lat, lng=user_lng, markers=user_markers,zoom=16, style="height:900px;") %}
+        {{map.html}}
+        {{map.js}}
+      {% endwith %}
+  </div>
+</div>
+{% endblock %}
