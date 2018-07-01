@@ -7,9 +7,6 @@ import googlemaps
 import psycopg2
 import pandas as pd
 
-
-import pdb
-
 app = Flask(__name__)
 
 app.config.from_object(__name__)
@@ -36,9 +33,13 @@ con = psycopg2.connect(host=endpoint, database=dbname, user=username, password=p
 
 def handle_address(address):
     geocode_result = gmaps.geocode(address)
+
+    if not geocode_result:
+        return render_template("result-fail.html")
+
     user_lat = geocode_result[0]["geometry"]["location"]["lat"]
     user_lng = geocode_result[0]["geometry"]["location"]["lng"]
-
+        
     sql_query = """
     SELECT hdb_labels, ST_Distance(pts.geom, ST_Transform(ST_GeomFromText('POINT(%s %s)',4326),3081)) as distance
     FROM final_addresses_not_joined_hdbscan pts
@@ -95,7 +96,7 @@ def handle_address(address):
     print(user_lat)
 
     return render_template(
-        "results.html",
+        "result-success.html",
         user_lat=user_lat,
         user_lng=user_lng,
         user_markers=user_markers,
@@ -110,8 +111,10 @@ def index():
 
     if request.method == "POST":
         address = request.form["address"]
-        print('doing a thing!!!!!!!')
-        return handle_address(address)
+        if address:
+            return handle_address(address)
+        else:
+            return render_template("result-fail.html")
     
     return render_template(
         "base.html",
