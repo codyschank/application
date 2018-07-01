@@ -1,3 +1,3 @@
 # application
 
-Python code (using Flask) and html to serve web app for Insight Data Science Fellowship
+Map the Vote. A web app that displays addresses with no registered voters. Currently working only for TX-25.
