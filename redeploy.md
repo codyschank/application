@@ -8,7 +8,7 @@ Follow these steps to deploy changes to the app. Assumes the server and app have
 `cd` into the repository and pull the latest: `$ git pull`
 
 
-### Restar the app.
+### Restart the app.
 
 First, verify if the app container is running:
 ```
