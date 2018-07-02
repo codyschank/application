@@ -4,6 +4,6 @@ A web app that displays addresses with no registered voters. Currently working o
 
 ### Quick Start
 
-Follow [these steps](https://github.com/codyschank/application/blob/docs/deploy.md) to deploy the app on AWS.
+Follow [these steps](https://github.com/codyschank/application/blob/master/deploy.md) to deploy the app on AWS.
 
-Follow [these steps](https://github.com/codyschank/application/blob/docs/redeploy.md) to deploy updates to the app.
+Follow [these steps](https://github.com/codyschank/application/blob/master/redeploy.md) to deploy updates to the app.
