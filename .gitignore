@@ -1,3 +1,5 @@
 secrets.py
 *pycache*
 .DS_Store
+*.sh
+*.pem
