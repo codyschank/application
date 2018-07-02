@@ -1,6 +1,6 @@
 # How to Deploy Changes to App
 
-Follow these steps to deploy changes to the app. Assumes the server and app have already been [deployed](https://github.com/codyschank/application/blob/docs/deploy.md), and that the app updates have been merged to the master branch.
+Follow these steps to deploy changes to the app. Assumes the server and app have already been [deployed](https://github.com/codyschank/application/blob/master/deploy.md), and that the app updates have been merged to the master branch.
 
 
 ### Pull the latest version
