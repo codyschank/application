@@ -31,8 +31,11 @@ $ sudo docker run \
     --rm \
     -v /home/ubuntu/application:/app claryjohn/mapthevote \
     bash -c "flask run --host=0.0.0.0 --port=5000"
+```
 
-# veryify the container is running
+Verify the container is running
+
+```
 $ sudo docker ps
 
 CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS              PORTS                    NAMES
