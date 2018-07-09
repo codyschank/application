@@ -1,6 +1,6 @@
 # Map the Vote
 
-A web app that displays addresses with no registered voters. Currently working only for TX-25.
+A web app that displays addresses with no registered voters. Currently working for TX-10, TX-21, and TX-25.
 
 ### Quick Start
 
