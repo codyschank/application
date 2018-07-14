@@ -7,6 +7,7 @@ from secrets import *
 import googlemaps
 import psycopg2
 import pandas as pd
+import json
 
 app = Flask(__name__)
 
@@ -97,7 +98,7 @@ def handle_address(address, option):
         n_unregistered = unregistered_addresses.shape[0]
 
     # save this to the session so it can be accessed by download function if needed
-    session["unregistered_addresses"] = unregistered_addresses.to_json()
+    session["unregistered_addresses"] = unregistered_addresses.oa_street_.to_dict()
 
     formatted_address = geocode_result[0]["formatted_address"]
 
@@ -142,8 +143,9 @@ def index():
 
 @app.route("/download")
 def download():
-    unregistered_addresses = pd.read_json(session["unregistered_addresses"])
-    csv = unregistered_addresses.to_csv()
+    unregistered_addresses = pd.DataFrame.from_dict(session.get("unregistered_addresses"), orient='index')
+    unregistered_addresses.columns = ['address']
+    csv = unregistered_addresses.to_csv(index=False)
     return Response(
         csv,
         mimetype="text/csv",
