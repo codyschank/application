@@ -11,7 +11,7 @@
   </head>
   <body>
     <div class="container">
-      
+
       <!-- banner image -->
       <div class="row">
         <div class="col">
@@ -25,21 +25,44 @@
       <div class="row">
         <div class="col">
           <form method="post" action="">
+
             <div class="form-row">
               <div class="input-group mb-2">
                 <input name="address" class="form-control form-control-lg" type="text" placeholder="123 Fake St, Austin, TX">
                 <span class="input-group-btn">
                  <button type="submit" class="btn btn-primary btn-lg">Search Address</button>
                 </span>
-              </div> 
+              </div>
             </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios1" value="option1" checked>
+              <label class="form-check-label" for="exampleRadios1">
+                Cluster
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios2" value="option2">
+              <label class="form-check-label" for="exampleRadios2">
+                Radius (1/4 mile)
+              </label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="exampleRadios" id="exampleRadios3" value="option3">
+              <label class="form-check-label" for="exampleRadios3">
+                Precinct
+              </label>
+            </div>
+
           </form>
         </div>
       </div>
-      
+
       <!-- search results -->
       {% block content %}{% endblock %}
-      
+
       </div>
     </body>
 
