@@ -5,7 +5,7 @@
   <div class="col-12">
     <div class="alert alert-success" role="alert">
         <p> Your search matched <b>{{formatted_address}}</b> (blue marker)</p>
-        <p> There are <b>{{n_unregistered}} unregistered houses</b> (green markers)</p>
+        <p> There are <b>{{n_unregistered}} unregistered houses using the {{search_option}} search option </b> (green markers)</p>
     </div>
       {% with map=googlemap_obj("my-map",lat=user_lat, lng=user_lng, markers=user_markers, zoom=16, fit_markers_to_bounds = True, style="height:900px;") %}
         {{map.html}}

@@ -1,7 +1,6 @@
 from flask import Flask, render_template, flash, request, Response, session
-from flask_googlemaps import GoogleMaps
-from flask_googlemaps import Map
-from io import StringIO
+from werkzeug.datastructures import Headers
+from flask_googlemaps import GoogleMaps, Map
 from secrets import *
 
 import googlemaps
@@ -31,7 +30,7 @@ GoogleMaps(app)
 # Connect to make queries using psycopg2
 con = psycopg2.connect(host=endpoint, database=dbname, user=username, password=password)
 
-def handle_address(address, option):
+def handle_address(address, search_option):
     geocode_result = gmaps.geocode(address)
 
     if not geocode_result:
@@ -40,7 +39,7 @@ def handle_address(address, option):
     user_lat = geocode_result[0]["geometry"]["location"]["lat"]
     user_lng = geocode_result[0]["geometry"]["location"]["lng"]
 
-    if(option == "option1"):
+    if(search_option == "cluster"):
 
         sql_query = """
         SELECT hdb_labels, ST_Distance(pts.geom, ST_Transform(ST_GeomFromText('POINT(%s %s)',4326),3081)) as distance
@@ -55,7 +54,7 @@ def handle_address(address, option):
         hdb_label = str(hdb_label_pd.hdb_labels.values[0])
 
         sql_query = """
-        SELECT oa_lat, oa_lon, oa_street_ FROM final_addresses_not_joined_hdbscan
+        SELECT oa_lat, oa_lon, oa_street_,oa_number, oa_street FROM final_addresses_not_joined_hdbscan
         WHERE hdb_labels = \'%s\';
         """ % (
             hdb_label
@@ -63,10 +62,10 @@ def handle_address(address, option):
         unregistered_addresses = pd.read_sql_query(sql_query, con)
         n_unregistered = unregistered_addresses.shape[0]
 
-    elif(option == "option2"):
+    elif(search_option == "radius"):
 
         sql_query = """
-        SELECT oa_lat, oa_lon, oa_street_ FROM final_addresses_not_joined_hdbscan
+        SELECT oa_lat, oa_lon, oa_street_, oa_number, oa_street FROM final_addresses_not_joined_hdbscan
         WHERE ST_Distance(geom, ST_Transform(ST_GeomFromText('POINT(%s %s)',4326),3081)) <= 400;
         """ % (
             user_lng,
@@ -75,7 +74,7 @@ def handle_address(address, option):
         unregistered_addresses = pd.read_sql_query(sql_query, con)
         n_unregistered = unregistered_addresses.shape[0]
 
-    if(option == "option3"):
+    if(search_option == "precinct"):
 
         sql_query = """
         SELECT cntyvtd, ST_Distance(pts.geom, ST_Transform(ST_GeomFromText('POINT(%s %s)',4326),3081)) as distance
@@ -89,7 +88,7 @@ def handle_address(address, option):
         cntyvtd = str(cntyvtd_pd.cntyvtd.values[0])
 
         sql_query = """
-        SELECT oa_lat, oa_lon, oa_street_ FROM final_addresses_not_joined_hdbscan
+        SELECT oa_lat, oa_lon, oa_street_, oa_number, oa_street FROM final_addresses_not_joined_hdbscan
         WHERE cntyvtd = \'%s\';
         """ % (
             cntyvtd
@@ -97,11 +96,15 @@ def handle_address(address, option):
         unregistered_addresses = pd.read_sql_query(sql_query, con)
         n_unregistered = unregistered_addresses.shape[0]
 
-    # save this to the session so it can be accessed by download function if needed
-    session["unregistered_addresses"] = unregistered_addresses.oa_street_.to_dict()
-
     formatted_address = geocode_result[0]["formatted_address"]
 
+    # save this to the session so it can be accessed by download function if needed
+    session["unregistered_addresses"] = unregistered_addresses[['oa_number','oa_street']].to_dict()
+    session["search_option"] = search_option
+    session["search_address"] = formatted_address
+
+    # get just the fields needed for next steps
+    unregistered_addresses = unregistered_addresses[['oa_lat', 'oa_lon', 'oa_street_']]
     unregistered_addresses["icon"] = "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
 
     user_markers = [tuple(x) for x in unregistered_addresses.values]
@@ -123,7 +126,7 @@ def handle_address(address, option):
         user_markers=user_markers,
         formatted_address=formatted_address,
         n_unregistered=n_unregistered,
-        unregistered_addresses=unregistered_addresses
+        search_option=search_option
     )
 
 @app.route("/", methods=["GET", "POST"])
@@ -131,9 +134,9 @@ def index():
 
     if request.method == "POST":
         address = request.form["address"]
-        exampleRadios = request.form["exampleRadios"]
+        search_option = request.form["search_option"]
         if address:
-            return handle_address(address, exampleRadios)
+            return handle_address(address, search_option)
         else:
             return render_template("result-fail.html")
 
@@ -143,14 +146,19 @@ def index():
 
 @app.route("/download")
 def download():
-    unregistered_addresses = pd.DataFrame.from_dict(session.get("unregistered_addresses"), orient='index')
-    unregistered_addresses.columns = ['address']
+    # if just one column use orient='index'
+    unregistered_addresses = pd.DataFrame.from_dict(session.get("unregistered_addresses"))
+    unregistered_addresses.columns = ['street_number','street_name']
+    unregistered_addresses = unregistered_addresses.sort_values(['street_name', 'street_number'])
     csv = unregistered_addresses.to_csv(index=False)
-    return Response(
-        csv,
-        mimetype="text/csv",
-        headers={"Content-disposition":
-                 "attachment; filename=test.csv"})
+
+    search_option = session.get("search_option")
+    search_address = session.get("search_address")
+    filename = search_address + " " + search_option + ".csv"
+
+    headers = Headers()
+    headers.set('Content-Disposition', 'attachment', filename=filename)
+    return Response(csv, mimetype="text/csv",headers=headers)
 
 if __name__ == "__main__":
     app.run(debug=True)
