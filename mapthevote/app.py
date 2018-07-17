@@ -30,14 +30,7 @@ GoogleMaps(app)
 # Connect to make queries using psycopg2
 con = psycopg2.connect(host=endpoint, database=dbname, user=username, password=password)
 
-def handle_address(address, search_option):
-    geocode_result = gmaps.geocode(address)
-
-    if not geocode_result:
-        return render_template("result-fail.html")
-
-    user_lat = geocode_result[0]["geometry"]["location"]["lat"]
-    user_lng = geocode_result[0]["geometry"]["location"]["lng"]
+def handle_search(user_lng, user_lat, search_option):
 
     if(search_option == "cluster"):
 
@@ -54,13 +47,12 @@ def handle_address(address, search_option):
         hdb_label = str(hdb_label_pd.hdb_labels.values[0])
 
         sql_query = """
-        SELECT oa_lat, oa_lon, oa_street_,oa_number, oa_street FROM final_addresses_not_joined_hdbscan
+        SELECT oa_lat, oa_lon, oa_street_, oa_number, oa_street FROM final_addresses_not_joined_hdbscan
         WHERE hdb_labels = \'%s\';
         """ % (
             hdb_label
         )
         unregistered_addresses = pd.read_sql_query(sql_query, con)
-        n_unregistered = unregistered_addresses.shape[0]
 
     elif(search_option == "radius"):
 
@@ -72,7 +64,6 @@ def handle_address(address, search_option):
             user_lat,
         )
         unregistered_addresses = pd.read_sql_query(sql_query, con)
-        n_unregistered = unregistered_addresses.shape[0]
 
     if(search_option == "precinct"):
 
@@ -94,14 +85,28 @@ def handle_address(address, search_option):
             cntyvtd
         )
         unregistered_addresses = pd.read_sql_query(sql_query, con)
-        n_unregistered = unregistered_addresses.shape[0]
 
+    return(unregistered_addresses)
+
+def handle_address(address, search_option):
+
+    geocode_result = gmaps.geocode(address)
+
+    if not geocode_result:
+        return render_template("result-fail.html")
+
+    user_lat = geocode_result[0]["geometry"]["location"]["lat"]
+    user_lng = geocode_result[0]["geometry"]["location"]["lng"]
+
+    unregistered_addresses = handle_search(user_lng,user_lat,search_option)
+
+    n_unregistered = unregistered_addresses.shape[0]
     formatted_address = geocode_result[0]["formatted_address"]
 
-    # save this to the session so it can be accessed by download function if needed
-    session["unregistered_addresses"] = unregistered_addresses[['oa_number','oa_street']].to_dict()
     session["search_option"] = search_option
     session["search_address"] = formatted_address
+    session["user_lng"] = user_lng
+    session["user_lat"] = user_lat
 
     # get just the fields needed for next steps
     unregistered_addresses = unregistered_addresses[['oa_lat', 'oa_lon', 'oa_street_']]
@@ -146,14 +151,18 @@ def index():
 
 @app.route("/download")
 def download():
-    # if just one column use orient='index'
-    unregistered_addresses = pd.DataFrame.from_dict(session.get("unregistered_addresses"))
+
+    search_option = session.get("search_option")
+    search_address = session.get("search_address")
+    user_lng = session.get("user_lng")
+    user_lat = session.get("user_lat")
+
+    unregistered_addresses = handle_search(user_lng,user_lat,search_option)
+    unregistered_addresses = unregistered_addresses[['oa_number', 'oa_street']]
     unregistered_addresses.columns = ['street_number','street_name']
     unregistered_addresses = unregistered_addresses.sort_values(['street_name', 'street_number'])
     csv = unregistered_addresses.to_csv(index=False)
 
-    search_option = session.get("search_option")
-    search_address = session.get("search_address")
     filename = search_address + " " + search_option + ".csv"
 
     headers = Headers()
