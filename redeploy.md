@@ -21,7 +21,7 @@ If you get an error that docker is not running, start it:
 $ systemctl start docker
 ```
 
-Otherwise, if the container is running it will listed in the `sudo docker ps` output:
+Otherwise, if the container is running it will be listed in the `sudo docker ps` output:
 
 ```
 CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS              PORTS                    NAMES
