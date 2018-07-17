@@ -13,13 +13,26 @@ Follow these steps to deploy changes to the app. Assumes the server and app have
 First, verify if the app container is running:
 ```
 $ sudo docker ps
+```
 
-# If the container is running it will be listed here
+If you get an error that docker is not running, start it:
+
+```
+$ systemctl start docker
+```
+
+Otherwise, if the container is running it will listed in the `sudo docker ps` output:
+
+```
 CONTAINER ID        IMAGE                  COMMAND                  CREATED             STATUS              PORTS                    NAMES
 dd62ece05cc5        claryjohn/mapthevote   "bash -c 'flask run …"   5 days ago          Up 5 days        0.0.0.0:5000->5000/tcp   mapthevote
 ```
 
-If the container is running, restart it with `$ sudo docker restart mapthevote`
+If the container is running, restart it:
+
+```
+$ sudo docker restart mapthevote`
+```
 
 If the container is missing or not running, run the app in a new container:
 
