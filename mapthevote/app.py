@@ -32,44 +32,22 @@ con = psycopg2.connect(host=endpoint, database=dbname, user=username, password=p
 
 def handle_search(user_lng, user_lat, search_option):
 
-    if(search_option == "cluster"):
+    if(search_option == "radius"):
 
         sql_query = """
-        SELECT hdb_labels, ST_Distance(pts.geom, ST_Transform(ST_GeomFromText('POINT(%s %s)',4326),3081)) as distance
-        FROM final_addresses_not_joined_hdbscan pts
-        WHERE pts.hdb_labels > 0
-        ORDER BY distance LIMIT 1;
-        """ % (
-            user_lng,
-            user_lat,
-        )
-        hdb_label_pd = pd.read_sql_query(sql_query, con)
-        hdb_label = str(hdb_label_pd.hdb_labels.values[0])
-
-        sql_query = """
-        SELECT oa_lat, oa_lon, oa_street_, oa_number, oa_street FROM final_addresses_not_joined_hdbscan
-        WHERE hdb_labels = \'%s\';
-        """ % (
-            hdb_label
-        )
-        unregistered_addresses = pd.read_sql_query(sql_query, con)
-
-    elif(search_option == "radius"):
-
-        sql_query = """
-        SELECT oa_lat, oa_lon, oa_street_, oa_number, oa_street FROM final_addresses_not_joined_hdbscan
-        WHERE ST_Distance(geom, ST_Transform(ST_GeomFromText('POINT(%s %s)',4326),3081)) <= 400;
+        SELECT oa_lat, oa_lon, oa_street_, oa_number, oa_street FROM select_final_addresses
+        WHERE ST_Distance(geom, ST_Transform(ST_GeomFromText('POINT(%s %s)',4326),2163)) <= 400;
         """ % (
             user_lng,
             user_lat,
         )
         unregistered_addresses = pd.read_sql_query(sql_query, con)
 
-    if(search_option == "precinct"):
+    elif(search_option == "precinct"):
 
         sql_query = """
-        SELECT cntyvtd, ST_Distance(pts.geom, ST_Transform(ST_GeomFromText('POINT(%s %s)',4326),3081)) as distance
-        FROM final_addresses_not_joined_hdbscan pts
+        SELECT cntyvtd, ST_Distance(pts.geom, ST_Transform(ST_GeomFromText('POINT(%s %s)',4326),2163)) as distance
+        FROM select_final_addresses pts
         ORDER BY distance LIMIT 1;
         """ % (
             user_lng,
@@ -79,7 +57,7 @@ def handle_search(user_lng, user_lat, search_option):
         cntyvtd = str(cntyvtd_pd.cntyvtd.values[0])
 
         sql_query = """
-        SELECT oa_lat, oa_lon, oa_street_, oa_number, oa_street FROM final_addresses_not_joined_hdbscan
+        SELECT oa_lat, oa_lon, oa_street_, oa_number, oa_street FROM select_final_addresses
         WHERE cntyvtd = \'%s\';
         """ % (
             cntyvtd
